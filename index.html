@@ -1,0 +1,156 @@
+<html>
+    <head>
+        <title>Three.js Crash Course</title>
+        <style>
+            body { margin: 0;}
+            canvas { width :100%; height: 100%;}
+            html{   background: #11e8bb; /* Old browsers */
+                    background: -moz-linear-gradient(top,  #BBF2E0 0%, #44DAAA 100%); /* FF3.6-15 */
+                    background: -webkit-linear-gradient(top,  #BBF2E0 0%,#44DAAA 100%); /* Chrome10-25,Safari5.1-6 */
+                    background: linear-gradient(to bottom,  #BBF2E0 0%,#44DAAA 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            }
+        </style>
+    </head>
+
+    <body>
+        <script type="module">
+            import * as THREE from './build/three.module.js';
+
+			//import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
+			import { GLTFLoader } from './examples/jsm/loaders/GLTFLoader.js';
+
+            //javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
+
+            var camera, scene, renderer;
+            //var controls;
+            var cube, model;
+
+            var angle = 0;
+            var anglespeed = 0.01;
+            var amp = 0.2;
+
+            var plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 10);
+            var raycaster = new THREE.Raycaster();
+            var mouse = new THREE.Vector2();
+            var pointOfIntersection = new THREE.Vector3();
+            var clock = new THREE.Clock();
+            var mixer;
+
+            init();
+            animate();
+
+            function init(){
+            
+                scene = new THREE.Scene();
+                //scene.background = new THREE.Color( 0xADEBB5 );
+				//scene.fog = new THREE.Fog( 0xffffff, 20, 100 );
+
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+                
+                let helper = new THREE.CameraHelper(camera);
+                //scene.add(helper);
+
+                renderer = new THREE.WebGLRenderer({ alpha: true });
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor( 0xffffff, 0);
+                document.body.appendChild(renderer.domElement);
+
+             
+
+                //controls = new OrbitControls( camera, renderer.domElement);
+
+                var loader = new GLTFLoader();
+
+                    loader.load( './models/robot_friend_ANIM.gltf', function ( gltf ) {
+                        model = gltf.scene;
+                        mixer = new THREE.AnimationMixer(model);
+                        var clip = gltf.animations[1];
+                        var action = mixer.clipAction(clip);
+                        action.play();
+                        
+                        scene.add( gltf.scene );
+
+                    }, undefined, function ( error ) {
+
+                        console.error( error );
+
+                } );
+
+                
+                camera.position.z = 5;
+
+                // lights
+
+                var hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+			    hemiLight.position.set( 0, 20, 0 );
+			    scene.add( hemiLight );
+
+			    var dirLight = new THREE.DirectionalLight( 0xC0C0C0 );
+				dirLight.position.set( 0, 0, 25 );
+				dirLight.castShadow = true;
+				dirLight.shadow.camera.top = 2;
+				dirLight.shadow.camera.bottom = - 2;
+				dirLight.shadow.camera.left = - 2;
+				dirLight.shadow.camera.right = 2;
+				dirLight.shadow.camera.near = 0.1;
+				dirLight.shadow.camera.far = 40;
+				scene.add( dirLight );
+                
+
+				
+                window.addEventListener('load', function() {
+                    window.addEventListener( 'resize', onWindowResize, false );
+                    document.addEventListener('mousemove', onMouseMove, false);
+                });
+            }
+
+            function onMouseMove(event){
+                mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                raycaster.ray.intersectPlane(plane, pointOfIntersection);
+                pointOfIntersection.z = -pointOfIntersection.z
+                model.lookAt(pointOfIntersection);
+            }
+
+            function onWindowResize() {
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( window.innerWidth, window.innerHeight );
+
+                render();
+
+            }
+
+            //draw Scene
+            function render() {
+                var delta = clock.getDelta();
+
+				if ( mixer ) {
+
+					mixer.update( delta );
+
+				}
+                
+                renderer.render( scene, camera );
+
+            }
+
+            // run game loop (update, render, repeat)
+            function animate() {
+                
+                requestAnimationFrame( animate );
+                angle += anglespeed;
+                model.position.y = Math.sin(angle) * amp;
+                
+                render();
+
+            }
+
+        </script>
+    </body>
+</html>
