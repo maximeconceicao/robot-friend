@@ -115,6 +115,27 @@
                 model.lookAt(pointOfIntersection);
             }
 
+            var startY;
+
+            function onTouchStart(event) {
+
+                startY = event.touches[ 0 ].pageY;
+
+            }
+
+            function onTouchMove( event ) {
+
+                var deltaY = ( event.touches[ 0 ].pageY - startY );
+
+                mouse.x = ( event.touches[ 0 ].pageX / window.innerWidth ) * 2 - 1;
+                mouse.y = - ( event.touches[ 0 ].pageY / window.innerHeight ) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                raycaster.ray.intersectPlane(plane, pointOfIntersection);
+                pointOfIntersection.z = -pointOfIntersection.z
+                model.lookAt(pointOfIntersection);
+
+            }
+
             function onWindowResize() {
 
                 camera.aspect = window.innerWidth / window.innerHeight;
